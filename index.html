@@ -41,7 +41,9 @@ button{
 <body>
 
 <h1>Monitor de Postura</h1>
-
+<button onclick="navigator.vibrate(1000)">
+Teste Vibração
+</button>
 <button id="start">Ativar Sensores</button> <button id="calibrate">Calibrar Postura</button>
 
 <p>Inclinação atual:</p>
@@ -55,7 +57,7 @@ let reference = null;
 let currentPitch = 0;
 
 const LIMIT = 15;
-const TIME_LIMIT = 30000;
+const TIME_LIMIT = 10000;
 
 let badPostureStart = null;
 let vibrating = false;
