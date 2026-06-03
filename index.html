@@ -61,26 +61,35 @@ Teste Vibração
 
 let reference = null;
 let currentPitch = 0;
-
+let vibrationInterval = null;
 const LIMIT = 15;
 const TIME_LIMIT = 10000;
 
 let badPostureStart = null;
 let vibrating = false;
 
-function vibrate(){
-    if(!vibrating){
-        navigator.vibrate([300,150,300]);
-        navigator.vibrate([300,150,300]);
-        navigator.vibrate([300,150,300]);
-        navigator.vibrate([300,150,300]);
-        vibrating = true;
-    }
+function vibrate() {
+
+    if (vibrationInterval !== null)
+        return;
+
+    navigator.vibrate(500);
+
+    vibrationInterval = setInterval(() => {
+        navigator.vibrate(500);
+    }, 700);
+
 }
 
-function stopVibrate(){
+function stopVibrate() {
+
     navigator.vibrate(0);
-    vibrating = false;
+
+    if (vibrationInterval !== null) {
+        clearInterval(vibrationInterval);
+        vibrationInterval = null;
+    }
+
 }
 
 function updateStatus(){
