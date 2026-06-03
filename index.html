@@ -28,7 +28,7 @@ button{
     font-size:1.1rem;
     padding:10px 20px;
     margin:10px;
-        background: rgb(120, 89, 89);
+        background: rgb(101, 70, 147);
     color: black;
 }
 
@@ -63,7 +63,7 @@ let reference = null;
 let currentPitch = 0;
 let vibrationInterval = null;
 const LIMIT = 15;
-const TIME_LIMIT = 10000;
+const TIME_LIMIT = 1000;
 
 let badPostureStart = null;
 let vibrating = false;
@@ -73,10 +73,10 @@ function vibrate() {
     if (vibrationInterval !== null)
         return;
 
-    navigator.vibrate(500);
+    navigator.vibrate(800);
 
     vibrationInterval = setInterval(() => {
-        navigator.vibrate(500);
+        navigator.vibrate(800);
     }, 700);
 
 }
@@ -138,8 +138,8 @@ function updateStatus(){
 
 function handleOrientation(event){
 
-    if(event.gamma !== null){
-        currentPitch = event.gamma;
+    if(event.beta !== null){
+        currentPitch = event.beta;
         updateStatus();
     }
 }
