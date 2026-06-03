@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitor de Postura</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    text-align:center;
+    padding:20px;
+}
+
+h1{
+    margin-bottom:10px;
+}
+
+#status{
+    font-size:1.3rem;
+    margin:20px;
+}
+
+button{
+    font-size:1.1rem;
+    padding:10px 20px;
+    margin:10px;
+}
+
+.good{
+    color:green;
+}
+
+.bad{
+    color:red;
+}
+</style>
+
+</head>
+<body>
+
+<h1>Monitor de Postura</h1>
+
+<button id="start">Ativar Sensores</button> <button id="calibrate">Calibrar Postura</button>
+
+<p>Inclinação atual:</p>
+<h2 id="angle">0°</h2>
+
+<p id="status" class="good">Aguardando calibração</p>
+
+<script>
+
+let reference = null;
+let currentPitch = 0;
+
+const LIMIT = 15;
+const TIME_LIMIT = 30000;
+
+let badPostureStart = null;
+let vibrating = false;
+
+function vibrate(){
+    if(!vibrating){
+        navigator.vibrate([300,150,300]);
+        vibrating = true;
+    }
+}
+
+function stopVibrate(){
+    navigator.vibrate(0);
+    vibrating = false;
+}
+
+function updateStatus(){
+
+    if(reference === null) return;
+
+    const diff = Math.abs(currentPitch - reference);
+
+    document.getElementById("angle").innerText =
+        diff.toFixed(1) + "°";
+
+    if(diff > LIMIT){
+
+        if(badPostureStart === null){
+            badPostureStart = Date.now();
+        }
+
+        const elapsed =
+            Date.now() - badPostureStart;
+
+        if(elapsed > TIME_LIMIT){
+            document.getElementById("status")
+                .innerText =
+                "Postura ruim detectada";
+            document.getElementById("status")
+                .className = "bad";
+
+            vibrate();
+        }
+
+    }else{
+
+        badPostureStart = null;
+
+        document.getElementById("status")
+            .innerText =
+            "Postura OK";
+
+        document.getElementById("status")
+            .className = "good";
+
+        stopVibrate();
+    }
+}
+
+function handleOrientation(event){
+
+    if(event.beta !== null){
+        currentPitch = event.beta;
+        updateStatus();
+    }
+}
+
+document.getElementById("start")
+.addEventListener("click", async ()=>{
+
+    if(typeof DeviceOrientationEvent !==
+       "undefined" &&
+       typeof DeviceOrientationEvent
+       .requestPermission === "function"){
+
+        try{
+            const permission =
+                await DeviceOrientationEvent
+                .requestPermission();
+
+            if(permission === "granted"){
+                window.addEventListener(
+                    "deviceorientation",
+                    handleOrientation
+                );
+            }
+        }catch(err){
+            alert(err);
+        }
+
+    }else{
+
+        window.addEventListener(
+            "deviceorientation",
+            handleOrientation
+        );
+    }
+});
+
+document.getElementById("calibrate")
+.addEventListener("click", ()=>{
+
+    reference = currentPitch;
+
+    badPostureStart = null;
+
+    document.getElementById("status")
+        .innerText =
+        "Postura calibrada";
+
+    stopVibrate();
+});
+
+</script>
+
+</body>
+</html>
