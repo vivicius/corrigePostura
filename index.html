@@ -28,7 +28,7 @@ button{
     font-size:1.1rem;
     padding:10px 20px;
     margin:10px;
-        background: black;
+        background: rgb(120, 89, 89);
     color: black;
 }
 
@@ -118,8 +118,7 @@ function updateStatus(){
                 .className = "bad";
 
             vibrate();
-            vibrate();
-            vibrate();
+
         }
 
     }else{
@@ -139,8 +138,8 @@ function updateStatus(){
 
 function handleOrientation(event){
 
-    if(event.beta !== null){
-        currentPitch = event.beta;
+    if(event.gamma !== null){
+        currentPitch = event.gamma;
         updateStatus();
     }
 }
