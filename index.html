@@ -63,7 +63,7 @@ let reference = null;
 let currentPitch = 0;
 let vibrationInterval = null;
 const LIMIT = 15;
-const TIME_LIMIT = 1000;
+const TIME_LIMIT = 5000;
 
 let badPostureStart = null;
 let vibrating = false;
@@ -73,11 +73,11 @@ function vibrate() {
     if (vibrationInterval !== null)
         return;
 
-    navigator.vibrate(800);
+    navigator.vibrate(500);
 
     vibrationInterval = setInterval(() => {
-        navigator.vibrate(800);
-    }, 700);
+        navigator.vibrate(500);
+    }, 500);
 
 }
 
