@@ -1,206 +1,819 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Monitor de Postura</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Postura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#0a0a0b;
+  --surface:#111113;
+  --surface2:#1a1a1e;
+  --border:#ffffff0f;
+  --border2:#ffffff18;
+  --text:#f0eee8;
+  --muted:#666660;
+  --accent:#c8f564;
+  --accent-dim:#c8f56420;
+  --red:#ff4444;
+  --red-dim:#ff444420;
+  --amber:#f5a623;
+  --amber-dim:#f5a62320;
+  --ring-track:#ffffff08;
+  --font-display:'Syne',sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --r:20px;
+  --r-sm:12px;
+}
+
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-display);
+  overflow-x:hidden;
+}
+
 body{
-    font-family: Arial, sans-serif;
-    text-align:center;
-    padding:20px;
-        background: black;
-    color: black;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+  padding:0;
 }
 
-h1{
-    margin-bottom:10px;
+.noise{
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
 }
 
-#status{
-    font-size:1.3rem;
-    margin:20px;
+.app{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+  max-width:420px;
+  margin:0 auto;
+  padding:48px 24px 36px;
+  gap:0;
 }
 
-button{
-    font-size:1.1rem;
-    padding:10px 20px;
-    margin:10px;
-        background: rgb(101, 70, 147);
-    color: black;
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:48px;
 }
 
-.good{
-    color:green;
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
-h2{
-  color:aliceblue;  
+
+.logo-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 12px var(--accent);
+  animation:pulse-dot 2s ease-in-out infinite;
 }
-.bad{
-    color:red;
+
+@keyframes pulse-dot{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.5;transform:scale(0.8)}
+}
+
+.logo-text{
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.power-btn{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  border:1px solid var(--border2);
+  background:var(--surface);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all 0.2s;
+  color:var(--muted);
+}
+
+.power-btn:hover{color:var(--text);border-color:var(--border2);background:var(--surface2)}
+.power-btn.active{color:var(--accent);border-color:var(--accent);box-shadow:0 0 20px var(--accent-dim)}
+
+.power-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+
+.ring-section{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-bottom:40px;
+}
+
+.ring-wrap{
+  position:relative;
+  width:220px;
+  height:220px;
+}
+
+.ring-svg{
+  width:100%;
+  height:100%;
+  transform:rotate(-90deg);
+}
+
+.ring-track{stroke:var(--ring-track)}
+.ring-fill{
+  stroke:var(--accent);
+  stroke-dasharray:565;
+  stroke-dashoffset:565;
+  transition:stroke-dashoffset 0.5s cubic-bezier(0.4,0,0.2,1),stroke 0.3s;
+  filter:drop-shadow(0 0 8px var(--accent));
+}
+
+.ring-center{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+}
+
+.angle-val{
+  font-family:var(--font-mono);
+  font-size:52px;
+  font-weight:300;
+  letter-spacing:-2px;
+  line-height:1;
+  color:var(--text);
+  transition:color 0.3s;
+}
+
+.angle-unit{
+  font-family:var(--font-mono);
+  font-size:14px;
+  color:var(--muted);
+  font-weight:300;
+}
+
+.status-badge{
+  margin-top:20px;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 14px;
+  border-radius:100px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  transition:all 0.3s;
+}
+
+.status-badge .dot{
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:var(--muted);
+  transition:background 0.3s;
+}
+
+.status-badge.good{
+  color:var(--accent);
+  border-color:var(--accent-dim);
+  background:var(--accent-dim);
+}
+
+.status-badge.good .dot{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+
+.status-badge.bad{
+  color:var(--red);
+  border-color:var(--red-dim);
+  background:var(--red-dim);
+  animation:shake-badge 0.4s ease;
+}
+
+.status-badge.bad .dot{background:var(--red);box-shadow:0 0 6px var(--red);animation:blink 0.5s ease infinite}
+
+.status-badge.warn{
+  color:var(--amber);
+  border-color:var(--amber-dim);
+  background:var(--amber-dim);
+}
+
+.status-badge.warn .dot{background:var(--amber)}
+
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes shake-badge{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+.stats-row{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+  margin-bottom:24px;
+}
+
+.stat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:14px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.stat-label{
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.stat-val{
+  font-family:var(--font-mono);
+  font-size:18px;
+  font-weight:400;
+  color:var(--text);
+  transition:color 0.3s;
+}
+
+.actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-bottom:24px;
+}
+
+.btn{
+  width:100%;
+  padding:16px 20px;
+  border-radius:var(--r-sm);
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  font-family:var(--font-display);
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:0.04em;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  transition:all 0.18s;
+  position:relative;
+  overflow:hidden;
+  text-align:left;
+}
+
+.btn::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:var(--text);
+  opacity:0;
+  transition:opacity 0.18s;
+}
+
+.btn:hover{border-color:var(--border2);transform:translateY(-1px)}
+.btn:hover::before{opacity:0.03}
+.btn:active{transform:translateY(0)}
+
+.btn-icon{
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  background:var(--surface2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+.btn-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.btn-primary{
+  border-color:var(--accent);
+  background:var(--accent);
+  color:#0a0a0b;
+}
+
+.btn-primary .btn-icon{background:rgba(0,0,0,0.12)}
+.btn-primary:hover::before{opacity:0}
+.btn-primary:hover{background:#d4f970;border-color:#d4f970}
+
+.btn-desc{
+  font-size:11px;
+  font-weight:400;
+  color:var(--muted);
+  margin-top:1px;
+}
+
+.btn-primary .btn-desc{color:rgba(10,10,11,0.55)}
+
+.btn-text{display:flex;flex-direction:column;gap:2px;flex:1}
+
+.threshold-section{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:16px;
+  margin-bottom:24px;
+}
+
+.threshold-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.threshold-title{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.threshold-val{
+  font-family:var(--font-mono);
+  font-size:13px;
+  color:var(--text);
+}
+
+input[type=range]{
+  -webkit-appearance:none;
+  width:100%;
+  height:2px;
+  background:var(--border2);
+  border-radius:2px;
+  outline:none;
+  cursor:pointer;
+}
+
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 12px var(--accent-dim);
+  cursor:pointer;
+  transition:transform 0.15s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+
+.timer-bar-wrap{
+  height:2px;
+  background:var(--border);
+  border-radius:2px;
+  overflow:hidden;
+  margin-bottom:24px;
+}
+
+.timer-bar{
+  height:100%;
+  width:0%;
+  background:var(--amber);
+  border-radius:2px;
+  transition:width 0.1s linear,background 0.3s;
+}
+
+.history-section{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:16px;
+}
+
+.history-title{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+
+.history-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.history-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:6px 0;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+  animation:fade-in 0.3s ease;
+}
+
+.history-item:last-child{border-bottom:none}
+
+@keyframes fade-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+.history-time{color:var(--muted);font-family:var(--font-mono);font-size:11px}
+.history-event{color:var(--text)}
+.history-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.history-dot.good{background:var(--accent)}
+.history-dot.bad{background:var(--red)}
+
+.empty-state{
+  color:var(--muted);
+  font-size:12px;
+  text-align:center;
+  padding:8px 0;
+}
+
+.disabled-overlay{
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  opacity:0;
+  pointer-events:none;
+  z-index:10;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:opacity 0.4s;
+}
+
+.disabled-overlay.show{
+  opacity:0.7;
+  pointer-events:all;
+}
+
+.offline-msg{
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.08em;
+  color:var(--muted);
+  text-transform:uppercase;
 }
 </style>
-
 </head>
 <body>
 
-<h1>Monitor de Postura</h1>
-<button onclick="navigator.vibrate(1000)">
-Teste Vibração
-</button>
-<button id="start">Ativar Sensores</button> <button id="calibrate">Calibrar Postura</button>
+<div class="noise"></div>
 
-<p>Inclinação atual:</p>
-<h2 id="angle">0°</h2>
+<div class="disabled-overlay" id="overlay">
+  <span class="offline-msg">Monitor pausado</span>
+</div>
 
-<p id="status" class="good">Aguardando calibração</p>
+<main class="app">
+
+  <header>
+    <div class="logo">
+      <div class="logo-dot" id="logoDot"></div>
+      <span class="logo-text">Postura</span>
+    </div>
+    <button class="power-btn active" id="powerBtn" title="Ligar / Desligar">
+      <svg viewBox="0 0 24 24"><path d="M12 2v4M4.93 4.93l2.83 2.83M19.07 4.93l-2.83 2.83M2 12h4M18 12h4M6.34 17.66l-2.83 2.83M17.66 17.66l2.83 2.83M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"/></svg>
+    </button>
+  </header>
+
+  <div class="ring-section">
+    <div class="ring-wrap">
+      <svg class="ring-svg" viewBox="0 0 180 180">
+        <circle class="ring-track" cx="90" cy="90" r="80" fill="none" stroke-width="6"/>
+        <circle class="ring-fill" id="ringFill" cx="90" cy="90" r="80" fill="none" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+      <div class="ring-center">
+        <span class="angle-val" id="angleVal">—</span>
+        <span class="angle-unit">graus</span>
+      </div>
+    </div>
+    <div class="status-badge" id="statusBadge">
+      <div class="dot"></div>
+      <span id="statusText">Aguardando ativação</span>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-label">Sessão</span>
+      <span class="stat-val" id="sessionTime">00:00</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Alertas</span>
+      <span class="stat-val" id="alertCount">0</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Postura OK</span>
+      <span class="stat-val" id="goodPct">—</span>
+    </div>
+  </div>
+
+  <div class="timer-bar-wrap">
+    <div class="timer-bar" id="timerBar"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="startBtn">
+      <div class="btn-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M9.5 7v10l7-5-7-5z" stroke="none" fill="currentColor"/></svg>
+      </div>
+      <div class="btn-text">
+        <span>Ativar sensores</span>
+        <span class="btn-desc">Solicita acesso ao giroscópio</span>
+      </div>
+    </button>
+    <button class="btn" id="calibrateBtn">
+      <div class="btn-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22V12M12 12L8 16M12 12l4 4"/><circle cx="12" cy="7" r="3"/><path d="M3 12h3M18 12h3"/></svg>
+      </div>
+      <div class="btn-text">
+        <span>Calibrar postura</span>
+        <span class="btn-desc">Define posição atual como referência</span>
+      </div>
+    </button>
+  </div>
+
+  <div class="threshold-section">
+    <div class="threshold-header">
+      <span class="threshold-title">Limite de desvio</span>
+      <span class="threshold-val"><span id="limitVal">15</span>°</span>
+    </div>
+    <input type="range" id="limitSlider" min="5" max="30" value="15" step="1">
+  </div>
+
+  <div class="history-section">
+    <div class="history-title">Histórico da sessão</div>
+    <div class="history-list" id="historyList">
+      <div class="empty-state">Nenhum evento registrado</div>
+    </div>
+  </div>
+
+</main>
 
 <script>
+(function(){
 
-let reference = null;
-let currentPitch = 0;
-let vibrationInterval = null;
-const LIMIT = 15;
+const RING_CIRCUMFERENCE = 2 * Math.PI * 80;
 const TIME_LIMIT = 5000;
 
+let enabled = true;
+let sensorActive = false;
+let reference = null;
+let currentPitch = 0;
 let badPostureStart = null;
 let vibrating = false;
+let vibrationInterval = null;
+let LIMIT = 15;
+let wakeLock = null;
 
-function vibrate() {
+let sessionStart = Date.now();
+let alertCount = 0;
+let goodTicks = 0;
+let totalTicks = 0;
 
-    if (vibrationInterval !== null)
-        return;
+let history = [];
 
-    navigator.vibrate(500);
+const angleVal = document.getElementById('angleVal');
+const statusBadge = document.getElementById('statusBadge');
+const statusText = document.getElementById('statusText');
+const ringFill = document.getElementById('ringFill');
+const powerBtn = document.getElementById('powerBtn');
+const logoDot = document.getElementById('logoDot');
+const startBtn = document.getElementById('startBtn');
+const calibrateBtn = document.getElementById('calibrateBtn');
+const limitSlider = document.getElementById('limitSlider');
+const limitVal = document.getElementById('limitVal');
+const timerBar = document.getElementById('timerBar');
+const sessionTimeEl = document.getElementById('sessionTime');
+const alertCountEl = document.getElementById('alertCount');
+const goodPctEl = document.getElementById('goodPct');
+const historyList = document.getElementById('historyList');
+const overlay = document.getElementById('overlay');
 
-    vibrationInterval = setInterval(() => {
-        navigator.vibrate(500);
-    }, 500);
+ringFill.style.strokeDasharray = RING_CIRCUMFERENCE;
+ringFill.style.strokeDashoffset = RING_CIRCUMFERENCE;
 
+function setRing(ratio, color){
+  const offset = RING_CIRCUMFERENCE - (ratio * RING_CIRCUMFERENCE);
+  ringFill.style.strokeDashoffset = Math.max(0, offset);
+  ringFill.style.stroke = color || 'var(--accent)';
+  ringFill.style.filter = `drop-shadow(0 0 8px ${color || 'var(--accent)'})`;
 }
 
-function stopVibrate() {
+function setStatus(state, text){
+  statusBadge.className = 'status-badge ' + (state || '');
+  statusText.textContent = text;
+}
 
-    navigator.vibrate(0);
+function startVibrate(){
+  if(vibrationInterval !== null) return;
+  navigator.vibrate && navigator.vibrate(400);
+  vibrationInterval = setInterval(()=>{ navigator.vibrate && navigator.vibrate(400); }, 700);
+  vibrating = true;
+}
 
-    if (vibrationInterval !== null) {
-        clearInterval(vibrationInterval);
-        vibrationInterval = null;
-    }
+function stopVibrate(){
+  navigator.vibrate && navigator.vibrate(0);
+  if(vibrationInterval !== null){ clearInterval(vibrationInterval); vibrationInterval = null; }
+  vibrating = false;
+}
 
+function addHistory(type, text){
+  history.unshift({ type, text, time: new Date() });
+  if(history.length > 20) history.pop();
+  renderHistory();
+}
+
+function renderHistory(){
+  if(history.length === 0){
+    historyList.innerHTML = '<div class="empty-state">Nenhum evento registrado</div>';
+    return;
+  }
+  historyList.innerHTML = history.slice(0,8).map(h => {
+    const t = h.time.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    return `<div class="history-item">
+      <div class="history-dot ${h.type}"></div>
+      <span class="history-event">${h.text}</span>
+      <span class="history-time">${t}</span>
+    </div>`;
+  }).join('');
+}
+
+function updateStats(){
+  const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+  const m = String(Math.floor(elapsed/60)).padStart(2,'0');
+  const s = String(elapsed%60).padStart(2,'0');
+  sessionTimeEl.textContent = m + ':' + s;
+  alertCountEl.textContent = alertCount;
+  if(totalTicks > 0){
+    goodPctEl.textContent = Math.round((goodTicks/totalTicks)*100) + '%';
+  }
 }
 
 function updateStatus(){
+  if(!enabled || !sensorActive) return;
+  if(reference === null) return;
 
-    if(reference === null) return;
+  totalTicks++;
 
-    const diff = Math.abs(currentPitch - reference);
+  const diff = Math.abs(currentPitch - reference);
+  const ratio = Math.min(diff / LIMIT, 1);
 
-    document.getElementById("angle").innerText =
-        diff.toFixed(1) + "°";
+  angleVal.textContent = diff.toFixed(1);
 
-    if(diff > LIMIT){
+  if(diff > LIMIT){
+    const color = '#ff4444';
+    setRing(ratio, color);
+    angleVal.style.color = color;
 
-        if(badPostureStart === null){
-            badPostureStart = Date.now();
-        }
+    if(badPostureStart === null) badPostureStart = Date.now();
+    const elapsed = Date.now() - badPostureStart;
+    const progress = Math.min(elapsed / TIME_LIMIT, 1);
+    timerBar.style.width = (progress * 100) + '%';
+    timerBar.style.background = progress > 0.7 ? 'var(--red)' : 'var(--amber)';
 
-        const elapsed =
-            Date.now() - badPostureStart;
-
-        if(elapsed > TIME_LIMIT){
-            document.getElementById("status")
-                .innerText =
-                "Postura ruim detectada";
-            document.getElementById("status")
-                .className = "bad";
-
-            vibrate();
-
-        }
-
-    }else{
-
-        badPostureStart = null;
-
-        document.getElementById("status")
-            .innerText =
-            "Postura OK";
-
-        document.getElementById("status")
-            .className = "good";
-
-        stopVibrate();
+    if(elapsed > TIME_LIMIT){
+      setStatus('bad', 'Corrija sua postura');
+      if(!vibrating){
+        startVibrate();
+        alertCount++;
+        addHistory('bad', 'Postura inadequada detectada');
+      }
+    } else {
+      setStatus('warn', 'Desvio detectado…');
     }
-}
+  } else {
+    goodTicks++;
+    const color = 'var(--accent)';
+    setRing(ratio, color);
+    angleVal.style.color = 'var(--text)';
 
-function handleOrientation(event){
-
-    if(event.beta !== null){
-        currentPitch = event.beta;
-        updateStatus();
+    if(badPostureStart !== null){
+      addHistory('good', 'Postura corrigida');
     }
-}
-let wakeLock = null;
-
-async function keepScreenOn() {
-    try {
-        wakeLock = await navigator.wakeLock.request('screen');
-        console.log("Wake Lock ativado");
-    } catch (err) {
-        console.log(err);
-    }
-}
-document.getElementById("start")
-.addEventListener("click", async ()=>{
-
-    if(typeof DeviceOrientationEvent !==
-       "undefined" &&
-       typeof DeviceOrientationEvent
-       .requestPermission === "function"){
-
-        try{
-            const permission =
-                await DeviceOrientationEvent
-                .requestPermission();
-
-            if(permission === "granted"){
-                window.addEventListener(
-                    "deviceorientation",
-                    handleOrientation
-                );
-            }
-        }catch(err){
-            alert(err);
-        }
-
-    }else{
-
-        window.addEventListener(
-            "deviceorientation",
-            handleOrientation
-        );
-    }
-    keepScreenOn()
-});
-
-document.getElementById("calibrate")
-.addEventListener("click", ()=>{
-
-    reference = currentPitch;
-
     badPostureStart = null;
+    timerBar.style.width = '0%';
 
-    document.getElementById("status")
-        .innerText =
-        "Postura calibrada";
-
+    setStatus('good', 'Postura correta');
     stopVibrate();
+  }
+}
+
+function handleOrientation(e){
+  if(e.beta !== null){
+    currentPitch = e.beta;
+    updateStatus();
+  }
+}
+
+async function keepScreenOn(){
+  try{
+    wakeLock = await navigator.wakeLock.request('screen');
+  }catch(e){}
+}
+
+powerBtn.addEventListener('click', ()=>{
+  enabled = !enabled;
+  if(!enabled){
+    stopVibrate();
+    badPostureStart = null;
+    powerBtn.classList.remove('active');
+    logoDot.style.animation = 'none';
+    logoDot.style.background = 'var(--muted)';
+    logoDot.style.boxShadow = 'none';
+    overlay.classList.add('show');
+    setStatus('', 'Monitor pausado');
+    angleVal.textContent = '—';
+    angleVal.style.color = 'var(--text)';
+    timerBar.style.width = '0%';
+    setRing(0);
+  } else {
+    powerBtn.classList.add('active');
+    logoDot.style.animation = '';
+    logoDot.style.background = '';
+    logoDot.style.boxShadow = '';
+    overlay.classList.remove('show');
+    setStatus(sensorActive ? 'good' : '', sensorActive ? 'Postura correta' : 'Aguardando calibração');
+    sessionStart = Date.now();
+    goodTicks = 0;
+    totalTicks = 0;
+  }
 });
 
-</script>
+startBtn.addEventListener('click', async ()=>{
+  if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
+    try{
+      const perm = await DeviceOrientationEvent.requestPermission();
+      if(perm === 'granted'){
+        window.addEventListener('deviceorientation', handleOrientation);
+        sensorActive = true;
+      }
+    }catch(e){
+      alert('Não foi possível acessar o giroscópio: ' + e.message);
+      return;
+    }
+  } else {
+    window.addEventListener('deviceorientation', handleOrientation);
+    sensorActive = true;
+  }
 
+  keepScreenOn();
+  startBtn.style.opacity = '0.5';
+  startBtn.style.pointerEvents = 'none';
+  startBtn.querySelector('span').textContent = 'Sensores ativos';
+  startBtn.querySelector('.btn-desc').textContent = 'Giroscópio conectado';
+  addHistory('good', 'Sensores ativados');
+  setStatus('', 'Calibre sua postura');
+});
+
+calibrateBtn.addEventListener('click', ()=>{
+  if(!sensorActive){
+    setStatus('', 'Ative os sensores primeiro');
+    return;
+  }
+  reference = currentPitch;
+  badPostureStart = null;
+  timerBar.style.width = '0%';
+  stopVibrate();
+  angleVal.textContent = '0.0';
+  setRing(0);
+  setStatus('good', 'Postura calibrada');
+  addHistory('good', 'Postura de referência definida');
+});
+
+limitSlider.addEventListener('input', ()=>{
+  LIMIT = parseInt(limitSlider.value);
+  limitVal.textContent = LIMIT;
+});
+
+setInterval(updateStats, 1000);
+
+renderHistory();
+
+})();
+</script>
 </body>
 </html>
