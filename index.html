@@ -454,7 +454,6 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
 
 .disabled-overlay{
   position:fixed;
-
   background:var(--bg);
   opacity:0;
   pointer-events:none;
@@ -627,11 +626,39 @@ function setStatus(state, text){
   statusBadge.className = 'status-badge ' + (state || '');
   statusText.textContent = text;
 }
+function beep() {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-function startVibrate(){
-  if(vibrationInterval !== null) return;
+  function tone(start) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.frequency.value = 1200;
+    gain.gain.value = 0.1;
+
+    osc.start(audioCtx.currentTime + start);
+    osc.stop(audioCtx.currentTime + start + 0.12);
+  }
+
+  tone(0);
+  tone(0.2);
+
+  setTimeout(() => audioCtx.close(), 500);
+}
+function startVibrate() {
+  if (vibrationInterval !== null) return;
+
   navigator.vibrate && navigator.vibrate(400);
-  vibrationInterval = setInterval(()=>{ navigator.vibrate && navigator.vibrate(400); }, 700);
+  beep();
+
+  vibrationInterval = setInterval(() => {
+    navigator.vibrate && navigator.vibrate(400);
+    beep();
+  }, 700);
+
   vibrating = true;
 }
 
